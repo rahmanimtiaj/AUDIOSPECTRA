@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUDIOSPECTRA // Studio Precision Spectrum Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: {
+                            950: '#050608',
+                            900: '#080a0f',
+                            850: '#0e1117',
+                            800: '#151922',
+                            750: '#1c222e',
+                            700: '#252d3d',
+                            600: '#38445b'
+                        },
+                        neon: {
+                            cyan: '#00f0ff',
+                            violet: '#8b5cf6',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'Monaco', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modern Minimalist Glass & Precision Styling */
+        body {
+            background-color: #050608;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        }
+        
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(14, 17, 23, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        
+        .glass-panel-interactive {
+            background: rgba(14, 17, 23, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-panel-interactive:hover {
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 4px 20px -2px rgba(0, 240, 255, 0.05);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #050608; }
+        ::-webkit-scrollbar-thumb { background: #1c222e; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+
+        /* Sleek Range Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #151922;
+            border-radius: 4px;
+            height: 4px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #00f0ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+            background: #ffffff;
+        }
+
+        /* LED Pulse & Glow Effects */
+        .glow-cyan { box-shadow: 0 0 12px rgba(0, 240, 255, 0.35); }
+        .glow-amber { box-shadow: 0 0 12px rgba(245, 158, 11, 0.35); }
+        .glow-rose { box-shadow: 0 0 12px rgba(244, 63, 94, 0.5); }
+
+        .led-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Canvas Overlay Crosshair Pointer */
+        .canvas-container {
+            position: relative;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-neon-cyan selection:text-black">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-white/[0.06] bg-obsidian-900/80 backdrop-blur-md px-5 py-3 sticky top-0 z-50">
+        <div class="max-w-[1750px] mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo & Brand Info -->
+            <div class="flex items-center space-x-3.5">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-cyan via-blue-600 to-neon-violet p-[1px] flex items-center justify-center glow-cyan">
+                    <div class="w-full h-full bg-obsidian-950 rounded-[7px] flex items-center justify-center">
+                        <svg class="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wider uppercase text-white font-mono flex items-center gap-2">
+                        AUDIOSPECTRA <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950/80 text-neon-cyan border border-neon-cyan/30 font-semibold tracking-normal">DSP PRO-4</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">FabFilter / Teenage Engineering Precision Engine</p>
+                </div>
+            </div>
+
+            <!-- Source Input Selector (Pill Style) -->
+            <div class="flex items-center bg-obsidian-950 p-1 rounded-xl border border-white/[0.06] text-xs font-mono">
+                <button id="srcFileTab" class="px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 bg-obsidian-800 text-neon-cyan shadow-sm border border-white/[0.08]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                    Audio File
+                </button>
+                <button id="srcMicTab" class="px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 text-slate-400 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                    Studio Mic
+                </button>
+                <button id="srcGenTab" class="px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 text-slate-400 hover:text-white">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Signal Gen
+                </button>
+            </div>
+
+            <!-- DSP Audio Engine Info Telemetry -->
+            <div class="hidden md:flex items-center space-x-4 text-xs font-mono text-slate-400 glass-panel px-3.5 py-1.5 rounded-lg">
+                <div class="flex items-center gap-1.5">
+                    <span id="audioCtxStateLed" class="led-dot bg-emerald-400 glow-cyan"></span>
+                    <span id="infoSampleRate" class="text-slate-200 tabular-nums">48.0 kHz</span>
+                </div>
+                <div class="h-3 w-[1px] bg-white/10"></div>
+                <div>FFT: <span id="infoFFTSize" class="text-slate-200 tabular-nums">8192</span></div>
+                <div class="h-3 w-[1px] bg-white/10"></div>
+                <div>RES: <span id="infoBinRes" class="text-slate-200 tabular-nums">5.86 Hz</span></div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Workspace Dashboard -->
+    <main class="max-w-[1750px] mx-auto w-full p-4 space-y-4 flex-1 flex flex-col">
+        
+        <!-- DSP Control Toolbar & Preset Calibration Drawer -->
+        <div class="glass-panel p-3.5 rounded-2xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
+            
+            <!-- View Mode Selector -->
+            <div class="flex flex-col gap-1 lg:col-span-1">
+                <label class="text-slate-400 font-mono text-[10px] uppercase tracking-wider font-semibold">Visualization Mode</label>
+                <select id="viewModeSelect" class="bg-obsidian-950 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 font-mono focus:outline-none focus:border-neon-cyan">
+                    <option value="log">Log Spectrum (20Hz - 20kHz)</option>
+                    <option value="sortedDesc">Sorted Energy (Descending)</option>
+                    <option value="sortedAsc">Sorted Energy (Ascending)</option>
+                    <option value="dual">Dual View (Spectrum + Phase/Wave)</option>
+                </select>
+            </div>
+
+            <!-- FFT Size Resolution -->
+            <div class="flex flex-col gap-1 lg:col-span-1">
+                <label class="text-slate-400 font-mono text-[10px] uppercase tracking-wider font-semibold">FFT Resolution</label>
+                <select id="fftSizeSelect" class="bg-obsidian-950 border border-white/10 rounded-lg px-2.5 py-1.5 text-slate-200 font-mono focus:outline-none focus:border-neon-cyan">
+                    <option value="2048">2048 Bins (Fast / Transient)</option>
+                    <option value="4096">4096 Bins (Balanced)</option>
+                    <option value="8192" selected>8192 Bins (High Precision)</option>
+                    <option value="16384">16384 Bins (Ultra Sub-Bass HD)</option>
+                </select>
+            </div>
+
+            <!-- Smoothing Constant -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between font-mono">
+                    <label class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Smoothing</label>
+                    <span id="smoothingVal" class="text-neon-cyan text-[11px] tabular-nums">0.82</span>
+                </div>
+                <input id="smoothingSlider" type="range" min="0" max="0.95" step="0.01" value="0.82" class="w-full mt-1.5">
+            </div>
+
+            <!-- dB Range Floor / Ceiling -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between font-mono">
+                    <label class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">dB Floor / Ceiling</label>
+                    <span id="dbRangeVal" class="text-neon-cyan text-[11px] tabular-nums">-100 to 0 dB</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <input id="minDbSlider" type="range" min="-120" max="-40" step="1" value="-100" class="w-1/2" title="Min dB Floor">
+                    <input id="maxDbSlider" type="range" min="-20" max="12" step="1" value="0" class="w-1/2" title="Max dB Ceiling">
+                </div>
+            </div>
+
+            <!-- Peak Decay Rate -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between font-mono">
+                    <label class="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Peak Hold Decay</label>
+                    <span id="peakDecayVal" class="text-neon-cyan text-[11px] tabular-nums">1.5 dB/fr</span>
+                </div>
+                <input id="peakDecaySlider" type="range" min="0.2" max="4.0" step="0.1" value="1.5" class="w-full mt-1.5">
+            </div>
+
+            <!-- Visualizer Overlay Toggles -->
+            <div class="flex flex-col gap-1">
+                <label class="text-slate-400 font-mono text-[10px] uppercase tracking-wider font-semibold">Render Toggles</label>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <button id="toggleSplineBtn" class="flex-1 py-1.5 px-2 bg-obsidian-800 border border-neon-cyan text-neon-cyan rounded-lg text-[10px] font-mono font-semibold transition">
+                        Spline Curve
+                    </button>
+                    <button id="toggleBarsBtn" class="flex-1 py-1.5 px-2 bg-obsidian-800 border border-white/20 text-slate-300 rounded-lg text-[10px] font-mono font-semibold transition">
+                        FFT Bars
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Master Interactive Spectrum Canvas Box -->
+        <div class="canvas-container glass-panel rounded-2xl overflow-hidden shadow-2xl relative flex-1 min-h-[420px] flex flex-col">
+            
+            <!-- Top Status Bar & Tooltip Overlay -->
+            <div class="absolute top-3 left-4 right-4 flex items-center justify-between pointer-events-none z-10 text-xs font-mono">
+                <div id="canvasStatusBadge" class="bg-obsidian-950/85 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-slate-300 flex items-center gap-2">
+                    <span class="led-dot bg-emerald-400 glow-cyan"></span>
+                    <span id="statusText">System Ready. Select input audio or signal source.</span>
+                </div>
+
+                <!-- Floating Glass Cursor Crosshair Tooltip -->
+                <div id="hoverTooltip" class="bg-obsidian-950/90 backdrop-blur-md border border-neon-cyan/40 px-3.5 py-1.5 rounded-xl text-neon-cyan shadow-xl hidden flex items-center gap-3 font-mono text-xs">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Responsive WebGL/2D Canvas -->
+            <canvas id="spectrumCanvas" class="w-full h-full flex-1 block"></canvas>
+        </div>
+
+        <!-- Telemetry & Band Breakdown Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Live Precision Telemetry Strip (4 Columns) -->
+            <div class="lg:col-span-4 glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+                    <h3 class="font-mono text-xs uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Studio Audio Telemetry
+                    </h3>
+                    <div id="clipAlert" class="px-2 py-0.5 rounded text-[10px] font-mono bg-obsidian-800 text-slate-500 font-bold transition-all">
+                        CLIP DETECT
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5 font-mono text-xs">
+                    
+                    <!-- Fundamental Pitch Freq -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">Dominant Pitch</span>
+                        <div id="metricFreq" class="text-base font-bold text-neon-cyan tabular-nums mt-0.5">0.0 <span class="text-xs text-slate-400 font-normal">Hz</span></div>
+                    </div>
+                    
+                    <!-- Musical Pitch Note + Cents -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">Musical Note</span>
+                        <div id="metricNote" class="text-base font-bold text-neon-amber tabular-nums mt-0.5">-- <span id="metricCents" class="text-xs font-normal text-slate-400">+0c</span></div>
+                    </div>
+
+                    <!-- RMS Level -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">RMS Power</span>
+                        <div id="metricRMS" class="text-base font-bold text-slate-200 tabular-nums mt-0.5">-INF <span class="text-xs text-slate-400 font-normal">dBFS</span></div>
+                    </div>
+
+                    <!-- True Peak Level -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">True Peak</span>
+                        <div id="metricPeak" class="text-base font-bold text-slate-200 tabular-nums mt-0.5">-INF <span class="text-xs text-slate-400 font-normal">dBFS</span></div>
+                    </div>
+
+                    <!-- Crest Factor / Dynamic Range -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">Crest Factor</span>
+                        <div id="metricCrest" class="text-base font-bold text-slate-200 tabular-nums mt-0.5">0.0 <span class="text-xs text-slate-400 font-normal">dB</span></div>
+                    </div>
+
+                    <!-- Spectral Centroid -->
+                    <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05]">
+                        <span class="text-[10px] text-slate-400 block uppercase">Spectral Centroid</span>
+                        <div id="metricCentroid" class="text-base font-bold text-emerald-400 tabular-nums mt-0.5">0 <span class="text-xs text-slate-400 font-normal">Hz</span></div>
+                    </div>
+
+                </div>
+
+                <!-- Stereo Balance & Correlation Bar -->
+                <div class="bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05] font-mono text-xs space-y-1.5">
+                    <div class="flex justify-between text-[10px] text-slate-400">
+                        <span>Phase Correlation (-1.0 to +1.0)</span>
+                        <span id="metricCorrVal" class="text-neon-cyan font-bold tabular-nums">+1.00</span>
+                    </div>
+                    <div class="w-full bg-obsidian-900 h-2 rounded-full overflow-hidden border border-white/10 relative">
+                        <div class="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/30 z-10"></div>
+                        <div id="metricCorrBar" class="h-full bg-neon-cyan transition-all duration-75 rounded-full" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 6 Calibrated Frequency Sub-Bands Breakdown (8 Columns) -->
+            <div class="lg:col-span-8 glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+                    <h3 class="font-mono text-xs uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-neon-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        Calibrated 6-Octave Band Division
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-400">IEC 61260 Standard Octave Sub-Bands</span>
+                </div>
+
+                <div id="bandMetersContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- Frequency band cards dynamically injected here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Audio Source Transport & Control Dock -->
+        <div class="glass-panel rounded-2xl p-4 shadow-2xl">
+            
+            <!-- PANEL 1: AUDIO FILE PLAYER -->
+            <div id="panelFile" class="space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    
+                    <div class="flex items-center space-x-3">
+                        <label class="cursor-pointer bg-gradient-to-r from-neon-cyan to-blue-600 text-black font-semibold font-mono text-xs px-4 py-2.5 rounded-xl hover:opacity-90 transition flex items-center gap-2 shadow-lg shadow-cyan-500/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            Open Audio File
+                            <input type="file" id="audioFileInput" accept="audio/*" class="hidden">
+                        </label>
+                        <span id="fileNameDisplay" class="text-xs font-mono text-slate-400 truncate max-w-[220px]">No file loaded</span>
+                    </div>
+
+                    <!-- Transport Playback Buttons -->
+                    <div class="flex items-center space-x-2">
+                        <button id="btnPlayPause" disabled class="bg-obsidian-800 hover:bg-obsidian-750 border border-white/10 disabled:opacity-40 text-white p-2.5 rounded-xl font-mono text-xs transition">
+                            <svg id="iconPlay" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+
+                        <button id="btnLoop" class="bg-obsidian-850 border border-white/10 text-slate-400 hover:text-white p-2.5 rounded-xl text-xs font-mono transition" title="Toggle Loop">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h me-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Volume Slider -->
+                    <div class="flex items-center space-x-2.5 font-mono text-xs">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
+                        <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.8" class="w-28">
+                        <span id="volumeVal" class="text-slate-400 w-9 text-right tabular-nums">80%</span>
+                    </div>
+
+                </div>
+
+                <!-- Waveform Timeline Scrubber -->
+                <div class="flex items-center space-x-3 font-mono text-xs">
+                    <span id="timeElapsed" class="text-slate-400 tabular-nums">00:00</span>
+                    <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" class="flex-1 cursor-pointer" disabled>
+                    <span id="timeTotal" class="text-slate-400 tabular-nums">00:00</span>
+                </div>
+            </div>
+
+            <!-- PANEL 2: STUDIO MICROPHONE -->
+            <div id="panelMic" class="hidden space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h4 class="font-mono text-xs font-bold text-slate-200 uppercase">Live Studio Audio Input Stream</h4>
+                        <p class="text-xs text-slate-400">Raw uncolored DSP capture (hardware Auto-gain & Noise-suppression bypassed).</p>
+                    </div>
+                    <button id="btnToggleMic" class="bg-gradient-to-r from-neon-cyan to-blue-600 text-black font-mono font-semibold text-xs px-5 py-2.5 rounded-xl hover:opacity-90 transition shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                        Enable Studio Mic Input
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANEL 3: PRECISION SIGNAL GENERATOR RACK -->
+            <div id="panelGen" class="hidden space-y-4 font-mono text-xs">
+                <!-- Generator Header Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.06] pb-3">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="text-slate-400 uppercase text-[10px] font-semibold tracking-wider">Signal Waveform</label>
+                        <div id="waveformBtnGroup" class="flex flex-wrap items-center bg-obsidian-950 p-1 rounded-xl border border-white/10 gap-1 text-[11px]">
+                            <button data-type="sine" class="gen-type-btn px-2.5 py-1 rounded-lg bg-obsidian-800 text-neon-cyan font-semibold border border-neon-cyan/40">Sine</button>
+                            <button data-type="square" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Square</button>
+                            <button data-type="sawtooth" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Sawtooth</button>
+                            <button data-type="triangle" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Triangle</button>
+                            <button data-type="white" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">White Noise</button>
+                            <button data-type="pink" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Pink Noise</button>
+                            <button data-type="sweep" class="gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Log Sweep</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button id="btnMuteGen" class="px-3.5 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-slate-400 hover:text-white font-semibold transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+                            <span id="genMuteLabel">Speaker Muted</span>
+                        </button>
+
+                        <button id="btnToggleGen" class="bg-gradient-to-r from-neon-amber to-amber-500 text-black font-bold text-xs px-5 py-2 rounded-xl hover:opacity-90 transition shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                            <span id="genPowerLed" class="led-dot bg-black"></span>
+                            <span id="genPowerLabel">POWER ON GENERATOR</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual Rack Grid: Frequency & dBFS Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- Frequency Calibration Rack -->
+                    <div id="freqRackBlock" class="bg-obsidian-950/80 p-3.5 rounded-xl border border-white/[0.06] space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 uppercase text-[10px] font-semibold tracking-wider">Frequency Control</span>
+                            <div class="flex items-center gap-2 font-mono">
+                                <span id="genNoteDisp" class="text-neon-amber font-bold text-xs">A4 (+0c)</span>
+                            </div>
+                        </div>
+
+                        <!-- Main Freq Value Input & Display -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative flex-1">
+                                <input id="genFreqNumInput" type="number" min="20" max="20000" step="0.1" value="1000.0" class="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-neon-cyan font-bold font-mono text-base focus:outline-none focus:border-neon-cyan tabular-nums">
+                                <span class="absolute right-3 top-2 text-xs text-slate-500 font-mono">Hz</span>
+                            </div>
+                            <!-- Fine Hz Step Buttons -->
+                            <div class="flex items-center gap-1">
+                                <button id="btnFreqDec10" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">-10</button>
+                                <button id="btnFreqDec1" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">-1</button>
+                                <button id="btnFreqInc1" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">+1</button>
+                                <button id="btnFreqInc10" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">+10</button>
+                            </div>
+                        </div>
+
+                        <!-- Continuous Logarithmic Frequency Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] text-slate-500">
+                                <span>20 Hz</span>
+                                <span>1 kHz</span>
+                                <span>20 kHz</span>
+                            </div>
+                            <input id="genFreqSlider" type="range" min="0" max="1" step="0.0001" value="0.5699" class="w-full">
+                        </div>
+
+                        <!-- Preset Quick Buttons -->
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            <button data-freq="50" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">50Hz (Sub)</button>
+                            <button data-freq="100" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">100Hz (Bass)</button>
+                            <button data-freq="440" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">440Hz (A4)</button>
+                            <button data-freq="1000" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">1kHz (Cal)</button>
+                            <button data-freq="5000" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">5kHz (Mid)</button>
+                            <button data-freq="10000" class="gen-preset-btn px-2 py-1 rounded bg-obsidian-900 border border-white/10 text-slate-300 hover:border-neon-cyan text-[10px]">10kHz (Air)</button>
+                        </div>
+                    </div>
+
+                    <!-- Level (dBFS) & Sweep Control Rack -->
+                    <div class="bg-obsidian-950/80 p-3.5 rounded-xl border border-white/[0.06] space-y-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-slate-400 uppercase text-[10px] font-semibold tracking-wider">Output Level (dBFS Scale)</span>
+                                <span id="genGainPctDisp" class="text-slate-400 text-[11px] font-mono">Gain: 31.6%</span>
+                            </div>
+
+                            <!-- Main dBFS Value Input & Display -->
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="relative flex-1">
+                                    <input id="genDbNumInput" type="number" min="-80" max="0" step="0.1" value="-10.0" class="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-neon-amber font-bold font-mono text-base focus:outline-none focus:border-neon-amber tabular-nums">
+                                    <span class="absolute right-3 top-2 text-xs text-slate-500 font-mono">dBFS</span>
+                                </div>
+                                <!-- Fine dB Step Buttons -->
+                                <div class="flex items-center gap-1">
+                                    <button id="btnDbDec1" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">-1 dB</button>
+                                    <button id="btnDbDec05" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">-0.5 dB</button>
+                                    <button id="btnDbInc05" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">+0.5 dB</button>
+                                    <button id="btnDbInc1" class="px-2 py-1 bg-obsidian-850 border border-white/10 text-slate-300 rounded hover:bg-obsidian-750 text-[11px]">+1 dB</button>
+                                </div>
+                            </div>
+
+                            <!-- Continuous Decibel Slider (0.1 dB resolution) -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] text-slate-500">
+                                    <span>-80.0 dB</span>
+                                    <span>-40.0 dB</span>
+                                    <span>0.0 dBFS</span>
+                                </div>
+                                <input id="genDbSlider" type="range" min="-80" max="0" step="0.1" value="-10.0" class="w-full">
+                            </div>
+                        </div>
+
+                        <!-- Sweep Configuration Box (Visible during Sweep) -->
+                        <div id="genSweepConfigBox" class="hidden bg-obsidian-900/90 p-2.5 rounded-lg border border-white/10 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 flex-1">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold">Sweep Time</span>
+                                <input id="genSweepTimeSlider" type="range" min="1" max="15" step="0.5" value="5" class="flex-1">
+                                <span id="genSweepTimeDisp" class="text-neon-cyan font-bold text-xs w-8 text-right">5.0s</span>
+                            </div>
+                            <button id="btnSweepLoopToggle" class="px-2.5 py-1 rounded bg-obsidian-800 border border-neon-cyan text-neon-cyan text-[10px] font-bold">Loop: ON</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Hidden HTML5 Audio Element -->
+    <audio id="audioElement" class="hidden" crossorigin="anonymous"></audio>
+
+    <script>
+        /**
+         * AUDIOSPECTRA PRO DSP-4 Engine
+         * Accurate Web Audio API DSP, Stereo Correlation, Pitch Detection & Custom Visualizer
+         */
+
+        // 6 Standard Octave Frequency Sub-Bands
+        const BANDS = [
+            { id: 'sub', name: 'Sub-Bass', min: 20, max: 60, color: '#f43f5e' },
+            { id: 'bass', name: 'Bass', min: 60, max: 250, color: '#f59e0b' },
+            { id: 'lowmid', name: 'Low-Mid', min: 250, max: 500, color: '#00f0ff' },
+            { id: 'mid', name: 'Midrange', min: 500, max: 2000, color: '#10b981' },
+            { id: 'upmid', name: 'Upper-Mid', min: 2000, max: 6000, color: '#3b82f6' },
+            { id: 'treble', name: 'Brilliance', min: 6000, max: 20000, color: '#8b5cf6' }
+        ];
+
+        const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        // Web Audio Context & Nodes
+        let audioCtx = null;
+        let analyser = null;
+        let analyserL = null;
+        let analyserR = null;
+        let splitterNode = null;
+        let sourceNode = null;
+        let micStreamNode = null;
+        let genNode = null;
+        let genGainNode = null;
+        let activeSourceType = 'file';
+
+        // DOM Handles
+        const canvas = document.getElementById('spectrumCanvas');
+        const ctx = canvas.getContext('2d');
+        const audioElement = document.getElementById('audioElement');
+
+        // Toolbar UI Controls
+        const viewModeSelect = document.getElementById('viewModeSelect');
+        const fftSizeSelect = document.getElementById('fftSizeSelect');
+        const smoothingSlider = document.getElementById('smoothingSlider');
+        const minDbSlider = document.getElementById('minDbSlider');
+        const maxDbSlider = document.getElementById('maxDbSlider');
+        const peakDecaySlider = document.getElementById('peakDecaySlider');
+        const toggleSplineBtn = document.getElementById('toggleSplineBtn');
+        const toggleBarsBtn = document.getElementById('toggleBarsBtn');
+
+        const smoothingVal = document.getElementById('smoothingVal');
+        const dbRangeVal = document.getElementById('dbRangeVal');
+        const peakDecayVal = document.getElementById('peakDecayVal');
+
+        // Render toggles
+        let renderSpline = true;
+        let renderBars = true;
+
+        // Telemetry DOM Readouts
+        const metricFreq = document.getElementById('metricFreq');
+        const metricNote = document.getElementById('metricNote');
+        const metricCents = document.getElementById('metricCents');
+        const metricRMS = document.getElementById('metricRMS');
+        const metricPeak = document.getElementById('metricPeak');
+        const metricCrest = document.getElementById('metricCrest');
+        const metricCentroid = document.getElementById('metricCentroid');
+        const metricCorrVal = document.getElementById('metricCorrVal');
+        const metricCorrBar = document.getElementById('metricCorrBar');
+        const clipAlert = document.getElementById('clipAlert');
+        const statusText = document.getElementById('statusText');
+        const hoverTooltip = document.getElementById('hoverTooltip');
+
+        // Data Buffers
+        let fftSize = 8192;
+        let frequencyData = new Float32Array(fftSize / 2);
+        let timeDomainData = new Float32Array(fftSize);
+        let timeDomainDataL = new Float32Array(fftSize);
+        let timeDomainDataR = new Float32Array(fftSize);
+        let peakHoldArray = new Float32Array(256).fill(-120);
+
+        // Hover Coordinates
+        let mouseX = -1;
+        let mouseY = -1;
+        let isHovering = false;
+        let peakDecayDb = 1.5;
+
+        // Initialize Audio Engine
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioCtxClass();
+
+                // Main FFT Analyser
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = parseInt(fftSizeSelect.value);
+                analyser.smoothingTimeConstant = parseFloat(smoothingSlider.value);
+                analyser.minDecibels = parseFloat(minDbSlider.value);
+                analyser.maxDecibels = parseFloat(maxDbSlider.value);
+
+                // Stereo Splitter & Analysers for phase correlation
+                splitterNode = audioCtx.createChannelSplitter(2);
+                analyserL = audioCtx.createAnalyser();
+                analyserR = audioCtx.createAnalyser();
+                analyserL.fftSize = 2048;
+                analyserR.fftSize = 2048;
+
+                // Wire Audio Element
+                sourceNode = audioCtx.createMediaElementSource(audioElement);
+                sourceNode.connect(analyser);
+                sourceNode.connect(splitterNode);
+                splitterNode.connect(analyserL, 0);
+                splitterNode.connect(analyserR, 1);
+                analyser.connect(audioCtx.destination);
+
+                updateHeaderDSPInfo();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function updateHeaderDSPInfo() {
+            if (!audioCtx) return;
+            document.getElementById('infoSampleRate').textContent = (audioCtx.sampleRate / 1000).toFixed(1) + ' kHz';
+            document.getElementById('infoFFTSize').textContent = analyser.fftSize;
+            const res = (audioCtx.sampleRate / analyser.fftSize).toFixed(2);
+            document.getElementById('infoBinRes').textContent = res + ' Hz';
+        }
+
+        // Render Sub-Band Card UI Grid
+        function initBandMetersUI() {
+            const container = document.getElementById('bandMetersContainer');
+            container.innerHTML = '';
+            BANDS.forEach(band => {
+                const div = document.createElement('div');
+                div.className = 'bg-obsidian-950/80 p-3 rounded-xl border border-white/[0.05] flex flex-col justify-between font-mono';
+                div.innerHTML = `
+                    <div class="flex items-center justify-between text-[11px] mb-1.5">
+                        <span class="font-bold flex items-center gap-1.5" style="color: ${band.color}">
+                            <span class="led-dot" style="background-color: ${band.color}"></span>
+                            ${band.name}
+                        </span>
+                        <span class="text-slate-400 text-[10px]">${band.min}-${band.max >= 1000 ? band.max/1000 + 'k' : band.max}Hz</span>
+                    </div>
+                    <div class="w-full bg-obsidian-900 h-2.5 rounded-full overflow-hidden border border-white/10 my-1 relative">
+                        <div id="bandBar_${band.id}" class="h-full rounded-full transition-all duration-75" style="width: 0%; background-color: ${band.color}"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1">
+                        <span id="bandVal_${band.id}" class="tabular-nums">-100.0 dB</span>
+                        <span id="bandPk_${band.id}" class="text-slate-400 tabular-nums">Pk: -100</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        initBandMetersUI();
+
+        // High-DPI Retina Canvas Resize
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = Math.floor(rect.width * dpr);
+            canvas.height = Math.floor(rect.height * dpr);
+            ctx.scale(dpr, dpr);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 50);
+
+        // Source Switcher Tab Handlers
+        const srcFileTab = document.getElementById('srcFileTab');
+        const srcMicTab = document.getElementById('srcMicTab');
+        const srcGenTab = document.getElementById('srcGenTab');
+        const panelFile = document.getElementById('panelFile');
+        const panelMic = document.getElementById('panelMic');
+        const panelGen = document.getElementById('panelGen');
+
+        function switchSourceTab(type) {
+            activeSourceType = type;
+            [srcFileTab, srcMicTab, srcGenTab].forEach(t => {
+                t.className = 'px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 text-slate-400 hover:text-white';
+            });
+            [panelFile, panelMic, panelGen].forEach(p => p.classList.add('hidden'));
+
+            if (type === 'file') {
+                srcFileTab.className = 'px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 bg-obsidian-800 text-neon-cyan shadow-sm border border-white/[0.08]';
+                panelFile.classList.remove('hidden');
+                stopMic();
+                stopGen();
+                statusText.textContent = audioElement.src ? 'Audio File Loaded. Press Play.' : 'Select an audio file to begin.';
+            } else if (type === 'mic') {
+                srcMicTab.className = 'px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 bg-obsidian-800 text-neon-cyan shadow-sm border border-white/[0.08]';
+                panelMic.classList.remove('hidden');
+                audioElement.pause();
+                stopGen();
+                statusText.textContent = 'Studio Mic Mode. Click Enable Mic Input.';
+            } else if (type === 'gen') {
+                srcGenTab.className = 'px-3.5 py-1.5 rounded-lg transition-all font-medium flex items-center gap-2 bg-obsidian-800 text-neon-cyan shadow-sm border border-white/[0.08]';
+                panelGen.classList.remove('hidden');
+                audioElement.pause();
+                stopMic();
+                statusText.textContent = 'Signal Generator Ready.';
+            }
+        }
+
+        srcFileTab.addEventListener('click', () => switchSourceTab('file'));
+        srcMicTab.addEventListener('click', () => switchSourceTab('mic'));
+        srcGenTab.addEventListener('click', () => switchSourceTab('gen'));
+
+        // File Transport Controls
+        const fileInput = document.getElementById('audioFileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const iconPlay = document.getElementById('iconPlay');
+        const iconPause = document.getElementById('iconPause');
+        const seekBar = document.getElementById('seekBar');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeVal = document.getElementById('volumeVal');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const timeTotal = document.getElementById('timeTotal');
+        const btnLoop = document.getElementById('btnLoop');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                initAudioContext();
+                const fileURL = URL.createObjectURL(file);
+                audioElement.src = fileURL;
+                fileNameDisplay.textContent = file.name;
+                btnPlayPause.disabled = false;
+                seekBar.disabled = false;
+                audioElement.play();
+                updatePlayPauseIcons(true);
+                statusText.textContent = `Playing: ${file.name}`;
+            }
+        });
+
+        btnPlayPause.addEventListener('click', () => {
+            initAudioContext();
+            if (audioElement.paused) {
+                audioElement.play();
+                updatePlayPauseIcons(true);
+                statusText.textContent = `Playing: ${fileNameDisplay.textContent}`;
+            } else {
+                audioElement.pause();
+                updatePlayPauseIcons(false);
+                statusText.textContent = 'Playback Paused';
+            }
+        });
+
+        function updatePlayPauseIcons(isPlaying) {
+            if (isPlaying) {
+                iconPlay.classList.add('hidden');
+                iconPause.classList.remove('hidden');
+            } else {
+                iconPlay.classList.remove('hidden');
+                iconPause.classList.add('hidden');
+            }
+        }
+
+        audioElement.addEventListener('timeupdate', () => {
+            if (!isNaN(audioElement.duration)) {
+                const progress = (audioElement.currentTime / audioElement.duration) * 100;
+                seekBar.value = progress;
+                timeElapsed.textContent = formatTime(audioElement.currentTime);
+                timeTotal.textContent = formatTime(audioElement.duration);
+            }
+        });
+
+        seekBar.addEventListener('input', () => {
+            if (!isNaN(audioElement.duration)) {
+                audioElement.currentTime = (seekBar.value / 100) * audioElement.duration;
+            }
+        });
+
+        volumeSlider.addEventListener('input', () => {
+            audioElement.volume = volumeSlider.value;
+            volumeVal.textContent = Math.round(volumeSlider.value * 100) + '%';
+        });
+
+        let isLooping = false;
+        btnLoop.addEventListener('click', () => {
+            isLooping = !isLooping;
+            audioElement.loop = isLooping;
+            btnLoop.classList.toggle('text-neon-cyan', isLooping);
+            btnLoop.classList.toggle('border-neon-cyan', isLooping);
+        });
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Live Microphone Stream Engine
+        const btnToggleMic = document.getElementById('btnToggleMic');
+        let isMicActive = false;
+
+        btnToggleMic.addEventListener('click', async () => {
+            initAudioContext();
+            if (!isMicActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+                    micStreamNode = audioCtx.createMediaStreamSource(stream);
+                    micStreamNode.connect(analyser);
+                    isMicActive = true;
+                    btnToggleMic.textContent = 'Stop Microphone Input';
+                    btnToggleMic.classList.replace('from-neon-cyan', 'from-neon-rose');
+                    btnToggleMic.classList.replace('to-blue-600', 'to-red-700');
+                    statusText.textContent = 'Live Studio Microphone Active';
+                } catch (err) {
+                    alert('Could not access microphone: ' + err.message);
+                }
+            } else {
+                stopMic();
+                btnToggleMic.textContent = 'Enable Studio Mic Input';
+                btnToggleMic.classList.replace('from-neon-rose', 'from-neon-cyan');
+                btnToggleMic.classList.replace('to-red-700', 'to-blue-600');
+                statusText.textContent = 'Microphone Disconnected';
+            }
+        });
+
+        function stopMic() {
+            if (micStreamNode) {
+                micStreamNode.mediaStream.getTracks().forEach(track => track.stop());
+                micStreamNode.disconnect();
+                micStreamNode = null;
+            }
+            isMicActive = false;
+        }
+
+        // ==========================================
+        // PRECISION SIGNAL GENERATOR DSP ENGINE
+        // ==========================================
+        let isGenActive = false;
+        let isGenMuted = false;
+        let genWaveform = 'sine';
+        let genFrequency = 1000.0;
+        let genDbFS = -10.0;
+        let genSweepDuration = 5.0;
+        let genSweepLoop = true;
+        let genMuteGainNode = null;
+        let sweepTimerId = null;
+
+        // DOM Handles for Generator Rack
+        const btnToggleGen = document.getElementById('btnToggleGen');
+        const btnMuteGen = document.getElementById('btnMuteGen');
+        const genPowerLed = document.getElementById('genPowerLed');
+        const genPowerLabel = document.getElementById('genPowerLabel');
+        const genMuteLabel = document.getElementById('genMuteLabel');
+
+        const genFreqNumInput = document.getElementById('genFreqNumInput');
+        const genFreqSlider = document.getElementById('genFreqSlider');
+        const genNoteDisp = document.getElementById('genNoteDisp');
+        const freqRackBlock = document.getElementById('freqRackBlock');
+
+        const genDbNumInput = document.getElementById('genDbNumInput');
+        const genDbSlider = document.getElementById('genDbSlider');
+        const genGainPctDisp = document.getElementById('genGainPctDisp');
+
+        const genSweepConfigBox = document.getElementById('genSweepConfigBox');
+        const genSweepTimeSlider = document.getElementById('genSweepTimeSlider');
+        const genSweepTimeDisp = document.getElementById('genSweepTimeDisp');
+        const btnSweepLoopToggle = document.getElementById('btnSweepLoopToggle');
+
+        // Logarithmic Slider Mapping Helpers
+        function freqToLogSlider(f) {
+            return Math.log(f / 20) / Math.log(20000 / 20);
+        }
+        function logSliderToFreq(val) {
+            return 20 * Math.pow(20000 / 20, val);
+        }
+
+        // Set & Sync Frequency
+        function setGenFrequency(freq, updateInput = true, updateSlider = true) {
+            genFrequency = Math.max(20.0, Math.min(20000.0, freq));
+            if (updateInput) genFreqNumInput.value = genFrequency.toFixed(1);
+            if (updateSlider) genFreqSlider.value = freqToLogSlider(genFrequency);
+
+            const noteInfo = freqToNote(genFrequency);
+            genNoteDisp.textContent = `${noteInfo.note} (${noteInfo.cents >= 0 ? '+' : ''}${noteInfo.cents}c)`;
+
+            if (isGenActive && genNode && ['sine', 'square', 'sawtooth', 'triangle'].includes(genWaveform)) {
+                genNode.frequency.setTargetAtTime(genFrequency, audioCtx.currentTime, 0.01);
+            }
+        }
+
+        // Set & Sync Level (dBFS)
+        function setGenDbFS(db, updateInput = true, updateSlider = true) {
+            genDbFS = Math.max(-80.0, Math.min(0.0, db));
+            if (updateInput) genDbNumInput.value = genDbFS.toFixed(1);
+            if (updateSlider) genDbSlider.value = genDbFS.toFixed(1);
+
+            const gainLinear = Math.pow(10, genDbFS / 20);
+            genGainPctDisp.textContent = `Gain: ${(gainLinear * 100).toFixed(1)}%`;
+
+            if (isGenActive && genGainNode) {
+                genGainNode.gain.setTargetAtTime(gainLinear, audioCtx.currentTime, 0.01);
+            }
+        }
+
+        // Waveform Selector Buttons
+        document.querySelectorAll('.gen-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.gen-type-btn').forEach(b => {
+                    b.className = 'gen-type-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white';
+                });
+                btn.className = 'gen-type-btn px-2.5 py-1 rounded-lg bg-obsidian-800 text-neon-cyan font-semibold border border-neon-cyan/40';
+                genWaveform = btn.dataset.type;
+
+                // Toggle visibility of sweep box & freq rack
+                if (genWaveform === 'sweep') {
+                    genSweepConfigBox.classList.remove('hidden');
+                    freqRackBlock.classList.add('opacity-40');
+                } else {
+                    genSweepConfigBox.classList.add('hidden');
+                    freqRackBlock.classList.remove('opacity-40');
+                }
+
+                if (isGenActive) startGen();
+            });
+        });
+
+        // Frequency Input Event Listeners
+        genFreqSlider.addEventListener('input', () => {
+            setGenFrequency(logSliderToFreq(parseFloat(genFreqSlider.value)), true, false);
+        });
+        genFreqNumInput.addEventListener('input', () => {
+            const val = parseFloat(genFreqNumInput.value);
+            if (!isNaN(val)) setGenFrequency(val, false, true);
+        });
+
+        // Step Buttons for Frequency
+        document.getElementById('btnFreqDec10').addEventListener('click', () => setGenFrequency(genFrequency - 10));
+        document.getElementById('btnFreqDec1').addEventListener('click', () => setGenFrequency(genFrequency - 1));
+        document.getElementById('btnFreqInc1').addEventListener('click', () => setGenFrequency(genFrequency + 1));
+        document.getElementById('btnFreqInc10').addEventListener('click', () => setGenFrequency(genFrequency + 10));
+
+        // Preset Pills
+        document.querySelectorAll('.gen-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => setGenFrequency(parseFloat(btn.dataset.freq)));
+        });
+
+        // Level (dBFS) Event Listeners
+        genDbSlider.addEventListener('input', () => {
+            setGenDbFS(parseFloat(genDbSlider.value), true, false);
+        });
+        genDbNumInput.addEventListener('input', () => {
+            const val = parseFloat(genDbNumInput.value);
+            if (!isNaN(val)) setGenDbFS(val, false, true);
+        });
+
+        // Step Buttons for dBFS
+        document.getElementById('btnDbDec1').addEventListener('click', () => setGenDbFS(genDbFS - 1.0));
+        document.getElementById('btnDbDec05').addEventListener('click', () => setGenDbFS(genDbFS - 0.5));
+        document.getElementById('btnDbInc05').addEventListener('click', () => setGenDbFS(genDbFS + 0.5));
+        document.getElementById('btnDbInc1').addEventListener('click', () => setGenDbFS(genDbFS + 1.0));
+
+        // Sweep Time & Loop Toggle
+        genSweepTimeSlider.addEventListener('input', () => {
+            genSweepDuration = parseFloat(genSweepTimeSlider.value);
+            genSweepTimeDisp.textContent = genSweepDuration.toFixed(1) + 's';
+            if (isGenActive && genWaveform === 'sweep') startGen();
+        });
+
+        btnSweepLoopToggle.addEventListener('click', () => {
+            genSweepLoop = !genSweepLoop;
+            btnSweepLoopToggle.textContent = `Loop: ${genSweepLoop ? 'ON' : 'OFF'}`;
+            btnSweepLoopToggle.classList.toggle('border-neon-cyan', genSweepLoop);
+            btnSweepLoopToggle.classList.toggle('text-neon-cyan', genSweepLoop);
+        });
+
+        // Master Power Toggle
+        btnToggleGen.addEventListener('click', () => {
+            initAudioContext();
+            if (!isGenActive) startGen();
+            else stopGen();
+        });
+
+        // Mute Speaker Output Toggle
+        btnMuteGen.addEventListener('click', () => {
+            isGenMuted = !isGenMuted;
+            if (genMuteGainNode) {
+                genMuteGainNode.gain.setTargetAtTime(isGenMuted ? 0 : 1, audioCtx.currentTime, 0.01);
+            }
+            btnMuteGen.classList.toggle('text-neon-rose', isGenMuted);
+            btnMuteGen.classList.toggle('border-neon-rose', isGenMuted);
+            genMuteLabel.textContent = isGenMuted ? 'Muted (DSP Active)' : 'Speaker Muted';
+        });
+
+        function startGen() {
+            stopGen();
+            initAudioContext();
+
+            genGainNode = audioCtx.createGain();
+            genGainNode.gain.value = Math.pow(10, genDbFS / 20);
+
+            genMuteGainNode = audioCtx.createGain();
+            genMuteGainNode.gain.value = isGenMuted ? 0 : 1;
+
+            // Signal generator connects directly to analyser (for accurate measurement) and then through mute gain to speakers
+            genGainNode.connect(analyser);
+            genGainNode.connect(genMuteGainNode);
+            genMuteGainNode.connect(audioCtx.destination);
+
+            if (['sine', 'square', 'sawtooth', 'triangle'].includes(genWaveform)) {
+                const osc = audioCtx.createOscillator();
+                osc.type = genWaveform;
+                osc.frequency.setValueAtTime(genFrequency, audioCtx.currentTime);
+                osc.start();
+                genNode = osc;
+            } else if (genWaveform === 'white') {
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const src = audioCtx.createBufferSource();
+                src.buffer = buffer;
+                src.loop = true;
+                src.start();
+                genNode = src;
+                genNode.connect(genGainNode);
+                return finishStartGen();
+            } else if (genWaveform === 'pink') {
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = buffer.getChannelData(0);
+                let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    b0 = 0.99886 * b0 + white * 0.0555179;
+                    b1 = 0.99332 * b1 + white * 0.0750759;
+                    b2 = 0.96900 * b2 + white * 0.1538520;
+                    b3 = 0.86650 * b3 + white * 0.3104856;
+                    b4 = 0.55000 * b4 + white * 0.5329522;
+                    b5 = -0.7616 * b5 - white * 0.0168980;
+                    output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                    output[i] *= 0.11;
+                    b6 = white * 0.115926;
+                }
+                const src = audioCtx.createBufferSource();
+                src.buffer = buffer;
+                src.loop = true;
+                src.start();
+                genNode = src;
+                genNode.connect(genGainNode);
+                return finishStartGen();
+            } else if (genWaveform === 'sweep') {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                
+                const executeSweep = () => {
+                    const now = audioCtx.currentTime;
+                    osc.frequency.cancelScheduledValues(now);
+                    osc.frequency.setValueAtTime(20, now);
+                    osc.frequency.exponentialRampToValueAtTime(20000, now + genSweepDuration);
+                };
+
+                executeSweep();
+                osc.start();
+                genNode = osc;
+
+                if (genSweepLoop) {
+                    sweepTimerId = setInterval(executeSweep, genSweepDuration * 1000);
+                }
+            }
+
+            if (genNode && !['white', 'pink'].includes(genWaveform)) {
+                genNode.connect(genGainNode);
+            }
+
+            finishStartGen();
+        }
+
+        function finishStartGen() {
+            isGenActive = true;
+            genPowerLed.className = 'led-dot bg-emerald-400 glow-cyan';
+            genPowerLabel.textContent = 'GENERATOR ONLINE';
+            btnToggleGen.classList.replace('from-neon-amber', 'from-emerald-500');
+            btnToggleGen.classList.replace('to-amber-500', 'to-teal-600');
+            btnToggleGen.classList.replace('text-black', 'text-white');
+            statusText.textContent = `Generator Active: ${genWaveform.toUpperCase()} at ${genDbFS.toFixed(1)} dBFS`;
+        }
+
+        function stopGen() {
+            if (sweepTimerId) clearInterval(sweepTimerId);
+            if (genNode) {
+                try { genNode.stop(); genNode.disconnect(); } catch (e) {}
+                genNode = null;
+            }
+            if (genGainNode) {
+                genGainNode.disconnect();
+                genGainNode = null;
+            }
+            if (genMuteGainNode) {
+                genMuteGainNode.disconnect();
+                genMuteGainNode = null;
+            }
+            isGenActive = false;
+            genPowerLed.className = 'led-dot bg-black';
+            genPowerLabel.textContent = 'POWER ON GENERATOR';
+            btnToggleGen.classList.replace('from-emerald-500', 'from-neon-amber');
+            btnToggleGen.classList.replace('to-teal-600', 'to-amber-500');
+            btnToggleGen.classList.replace('text-white', 'text-black');
+        }
+
+        // Initialize state defaults
+        setGenFrequency(1000.0);
+        setGenDbFS(-10.0);
+
+        // DSP Settings Listeners
+        fftSizeSelect.addEventListener('change', () => {
+            fftSize = parseInt(fftSizeSelect.value);
+            if (analyser) {
+                analyser.fftSize = fftSize;
+                frequencyData = new Float32Array(analyser.frequencyBinCount);
+                timeDomainData = new Float32Array(analyser.fftSize);
+                updateHeaderDSPInfo();
+            }
+        });
+
+        smoothingSlider.addEventListener('input', () => {
+            const val = parseFloat(smoothingSlider.value);
+            smoothingVal.textContent = val.toFixed(2);
+            if (analyser) analyser.smoothingTimeConstant = val;
+        });
+
+        function updateDbRange() {
+            const min = parseInt(minDbSlider.value);
+            const max = parseInt(maxDbSlider.value);
+            dbRangeVal.textContent = `${min} to ${max} dB`;
+            if (analyser) {
+                analyser.minDecibels = min;
+                analyser.maxDecibels = max;
+            }
+        }
+        minDbSlider.addEventListener('input', updateDbRange);
+        maxDbSlider.addEventListener('input', updateDbRange);
+
+        peakDecaySlider.addEventListener('input', () => {
+            peakDecayDb = parseFloat(peakDecaySlider.value);
+            peakDecayVal.textContent = peakDecayDb.toFixed(1) + ' dB/fr';
+        });
+
+        toggleSplineBtn.addEventListener('click', () => {
+            renderSpline = !renderSpline;
+            toggleSplineBtn.classList.toggle('border-neon-cyan', renderSpline);
+            toggleSplineBtn.classList.toggle('text-neon-cyan', renderSpline);
+            toggleSplineBtn.classList.toggle('border-white/20', !renderSpline);
+            toggleSplineBtn.classList.toggle('text-slate-400', !renderSpline);
+        });
+
+        toggleBarsBtn.addEventListener('click', () => {
+            renderBars = !renderBars;
+            toggleBarsBtn.classList.toggle('border-neon-cyan', renderBars);
+            toggleBarsBtn.classList.toggle('text-neon-cyan', renderBars);
+            toggleBarsBtn.classList.toggle('border-white/20', !renderBars);
+            toggleBarsBtn.classList.toggle('text-slate-400', !renderBars);
+        });
+
+        // Mouse Hover Crosshair tracking
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+            hoverTooltip.classList.add('hidden');
+        });
+
+        // Main Studio Render Loop
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
+
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            // Obsidian background
+            ctx.fillStyle = '#080a0f';
+            ctx.fillRect(0, 0, width, height);
+
+            if (!analyser) {
+                drawStudioGrid(width, height);
+                return;
+            }
+
+            if (frequencyData.length !== analyser.frequencyBinCount) {
+                frequencyData = new Float32Array(analyser.frequencyBinCount);
+                timeDomainData = new Float32Array(analyser.fftSize);
+            }
+
+            analyser.getFloatFrequencyData(frequencyData);
+            analyser.getFloatTimeDomainData(timeDomainData);
+
+            if (analyserL && analyserR) {
+                analyserL.getFloatTimeDomainData(timeDomainDataL);
+                analyserR.getFloatTimeDomainData(timeDomainDataR);
+            }
+
+            const minDb = analyser.minDecibels;
+            const maxDb = analyser.maxDecibels;
+
+            // 1. Draw Precision Hz / dB Grid & Axis
+            drawStudioGrid(width, height, minDb, maxDb);
+
+            // 2. Render Main Visualizer Mode
+            const viewMode = viewModeSelect.value;
+            if (viewMode === 'log') {
+                renderLogSpectrumView(width, height, minDb, maxDb);
+            } else if (viewMode === 'sortedAsc' || viewMode === 'sortedDesc') {
+                renderSortedEnergyView(width, height, minDb, maxDb, viewMode === 'sortedAsc');
+            } else if (viewMode === 'dual') {
+                renderDualStudioView(width, height, minDb, maxDb);
+            }
+
+            // 3. Compute Real-time Telemetry
+            computeTelemetry(minDb, maxDb);
+
+            // 4. Render Hover Cursor Reticle
+            if (isHovering && mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
+                drawCursorReticle(width, height, minDb, maxDb);
+            }
+        }
+
+        // Render Logarithmic Calibrated Spectrum (Bars + Monotone Spline Curve)
+        function renderLogSpectrumView(w, h, minDb, maxDb) {
+            const numBars = 128;
+            const minF = 20;
+            const maxF = 20000;
+            const sampleRate = audioCtx.sampleRate;
+            const binCount = analyser.frequencyBinCount;
+            const barWidth = w / numBars;
+            const dbRange = maxDb - minDb;
+
+            const curvePoints = [];
+
+            for (let i = 0; i < numBars; i++) {
+                const fStart = minF * Math.pow(maxF / minF, i / numBars);
+                const fEnd = minF * Math.pow(maxF / minF, (i + 1) / numBars);
+
+                const binStart = Math.max(0, Math.floor(fStart / (sampleRate / analyser.fftSize)));
+                const binEnd = Math.min(binCount - 1, Math.ceil(fEnd / (sampleRate / analyser.fftSize)));
+
+                let maxVal = -160;
+                for (let b = binStart; b <= binEnd; b++) {
+                    if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
+                }
+
+                if (maxVal < minDb) maxVal = minDb;
+                if (maxVal > maxDb) maxVal = maxDb;
+
+                const normVal = (maxVal - minDb) / dbRange;
+                const barHeight = normVal * (h - 36);
+                const x = i * barWidth;
+                const y = h - 26 - barHeight;
+
+                const centerFreq = Math.sqrt(fStart * fEnd);
+                curvePoints.push({ x: x + barWidth / 2, y: y });
+
+                // Draw Gradient Bar
+                if (renderBars) {
+                    const grad = ctx.createLinearGradient(0, y, 0, h - 26);
+                    grad.addColorStop(0, getFreqColor(centerFreq, 1.0));
+                    grad.addColorStop(1, getFreqColor(centerFreq, 0.15));
+
+                    ctx.fillStyle = grad;
+                    // Rounded top cap
+                    ctx.beginPath();
+                    ctx.roundRect(x + 1, y, barWidth - 2, barHeight, [3, 3, 0, 0]);
+                    ctx.fill();
+                }
+
+                // Peak Hold Line & Decay
+                if (i >= peakHoldArray.length) peakHoldArray[i] = -120;
+                if (maxVal > peakHoldArray[i]) {
+                    peakHoldArray[i] = maxVal;
+                } else {
+                    peakHoldArray[i] -= peakDecayDb;
+                    if (peakHoldArray[i] < minDb) peakHoldArray[i] = minDb;
+                }
+
+                const peakNorm = (peakHoldArray[i] - minDb) / dbRange;
+                const peakY = h - 26 - (peakNorm * (h - 36));
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(x + 1, peakY - 1, barWidth - 2, 1.5);
+            }
+
+            // Render Smooth Bezier Spline Curve Envelope
+            if (renderSpline && curvePoints.length > 0) {
+                ctx.beginPath();
+                ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
+
+                for (let i = 0; i < curvePoints.length - 1; i++) {
+                    const xc = (curvePoints[i].x + curvePoints[i + 1].x) / 2;
+                    const yc = (curvePoints[i].y + curvePoints[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(curvePoints[i].x, curvePoints[i].y, xc, yc);
+                }
+
+                ctx.strokeStyle = '#00f0ff';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = 'rgba(0, 240, 255, 0.6)';
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0; // Reset shadow
+
+                // Subtle Spline Gradient Fill
+                ctx.lineTo(w, h - 26);
+                ctx.lineTo(0, h - 26);
+                ctx.closePath();
+                const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+                fillGrad.addColorStop(0, 'rgba(0, 240, 255, 0.12)');
+                fillGrad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+                ctx.fillStyle = fillGrad;
+                ctx.fill();
+            }
+        }
+
+        // Render Sorted Energy View (Highest to Lowest or Vice Versa)
+        function renderSortedEnergyView(w, h, minDb, maxDb, isAscending) {
+            const numBars = 100;
+            const minF = 20;
+            const maxF = 20000;
+            const sampleRate = audioCtx.sampleRate;
+            const dbRange = maxDb - minDb;
+
+            let bands = [];
+
+            for (let i = 0; i < numBars; i++) {
+                const fStart = minF * Math.pow(maxF / minF, i / numBars);
+                const fEnd = minF * Math.pow(maxF / minF, (i + 1) / numBars);
+                const centerFreq = Math.sqrt(fStart * fEnd);
+
+                const binStart = Math.max(0, Math.floor(fStart / (sampleRate / analyser.fftSize)));
+                const binEnd = Math.min(analyser.frequencyBinCount - 1, Math.ceil(fEnd / (sampleRate / analyser.fftSize)));
+
+                let maxVal = -160;
+                for (let b = binStart; b <= binEnd; b++) {
+                    if (frequencyData[b] > maxVal) maxVal = frequencyData[b];
+                }
+                if (maxVal < minDb) maxVal = minDb;
+
+                bands.push({ freq: centerFreq, db: maxVal });
+            }
+
+            bands.sort((a, b) => isAscending ? a.db - b.db : b.db - a.db);
+
+            const barWidth = w / numBars;
+
+            for (let i = 0; i < numBars; i++) {
+                const band = bands[i];
+                const normVal = (band.db - minDb) / dbRange;
+                const barHeight = Math.max(0, normVal * (h - 36));
+                const x = i * barWidth;
+                const y = h - 26 - barHeight;
+
+                const grad = ctx.createLinearGradient(0, y, 0, h - 26);
+                grad.addColorStop(0, getFreqColor(band.freq, 1.0));
+                grad.addColorStop(1, getFreqColor(band.freq, 0.2));
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect(x + 1, y, barWidth - 1.5, barHeight, [2, 2, 0, 0]);
+                ctx.fill();
+            }
+        }
+
+        // Dual View (Log Spectrum Top 60%, Precision Oscilloscope Bottom 40%)
+        function renderDualStudioView(w, h, minDb, maxDb) {
+            const topH = h * 0.58;
+            const botH = h * 0.36;
+
+            renderLogSpectrumView(w, topH + 26, minDb, maxDb);
+
+            // Divider Line
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, topH);
+            ctx.lineTo(w, topH);
+            ctx.stroke();
+
+            // Render Time-Domain Waveform Oscilloscope
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 1.5;
+            ctx.shadowColor = 'rgba(0, 240, 255, 0.4)';
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+
+            const sliceWidth = w / timeDomainData.length;
+            let x = 0;
+
+            for (let i = 0; i < timeDomainData.length; i++) {
+                const v = timeDomainData[i];
+                const y = (topH + botH / 2) + (v * (botH / 2.2));
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+
+                x += sliceWidth;
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Label
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px JetBrains Mono';
+            ctx.fillText('TIME-DOMAIN PHASE OSCILLOSCOPE', 12, topH + 16);
+        }
+
+        // Color mapping gradient helper based on frequency
+        function getFreqColor(freq, alpha = 1.0) {
+            if (freq < 60) return `rgba(244, 63, 94, ${alpha})`;       // Sub-Bass: Crimson Rose
+            if (freq < 250) return `rgba(245, 158, 11, ${alpha})`;     // Bass: Warm Amber
+            if (freq < 500) return `rgba(0, 240, 255, ${alpha})`;      // Low-Mid: Cyan
+            if (freq < 2000) return `rgba(16, 185, 129, ${alpha})`;    // Mid: Emerald Green
+            if (freq < 6000) return `rgba(59, 130, 246, ${alpha})`;    // Upper-Mid: Sapphire Blue
+            return `rgba(139, 92, 246, ${alpha})`;                     // Treble: Electric Violet
+        }
+
+        // Studio Calibrated Grid Lines & Axis Labels
+        function drawStudioGrid(w, h, minDb = -100, maxDb = 0) {
+            ctx.lineWidth = 0.5;
+            ctx.font = '10px JetBrains Mono';
+            ctx.fillStyle = '#475569';
+
+            // Horizontal dB grid lines
+            const dbSteps = [0, -12, -24, -36, -48, -60, -72, -84, -96];
+            const dbRange = maxDb - minDb;
+
+            dbSteps.forEach(db => {
+                if (db >= minDb && db <= maxDb) {
+                    const norm = (db - minDb) / dbRange;
+                    const y = h - 26 - (norm * (h - 36));
+
+                    ctx.strokeStyle = db === 0 ? 'rgba(244, 63, 94, 0.4)' : 'rgba(255, 255, 255, 0.04)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+
+                    ctx.fillText(`${db} dB`, 8, y - 4);
+                }
+            });
+
+            // Logarithmic Hz Frequency vertical grid lines
+            const hzMarks = [
+                { f: 20, label: '20Hz' },
+                { f: 50, label: '50Hz' },
+                { f: 100, label: '100Hz' },
+                { f: 250, label: '250Hz' },
+                { f: 500, label: '500Hz' },
+                { f: 1000, label: '1kHz' },
+                { f: 2000, label: '2kHz' },
+                { f: 5000, label: '5kHz' },
+                { f: 10000, label: '10kHz' },
+                { f: 20000, label: '20kHz' }
+            ];
+
+            const minF = 20;
+            const maxF = 20000;
+
+            hzMarks.forEach(m => {
+                const logRatio = Math.log(m.f / minF) / Math.log(maxF / minF);
+                const x = logRatio * w;
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h - 24);
+                ctx.stroke();
+
+                ctx.fillText(m.label, Math.min(x - 14, w - 36), h - 8);
+            });
+        }
+
+        // Draw Interactive Reticle & Floating Tooltip
+        function drawCursorReticle(w, h, minDb, maxDb) {
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(mouseX, 0);
+            ctx.lineTo(mouseX, h - 26);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, mouseY);
+            ctx.lineTo(w, mouseY);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            // Calculations
+            const minF = 20;
+            const maxF = 20000;
+            const logRatio = mouseX / w;
+            const hoverFreq = minF * Math.pow(maxF / minF, logRatio);
+
+            const normY = (h - 26 - mouseY) / (h - 36);
+            const hoverDb = minDb + normY * (maxDb - minDb);
+
+            const noteObj = freqToNote(hoverFreq);
+
+            hoverTooltip.classList.remove('hidden');
+            hoverTooltip.innerHTML = `
+                <div class="font-bold text-white">${hoverFreq.toFixed(1)} Hz</div>
+                <div class="text-neon-amber font-semibold">${noteObj.note} (${noteObj.cents >= 0 ? '+' : ''}${noteObj.cents}c)</div>
+                <div class="text-slate-300">${hoverDb.toFixed(1)} dBFS</div>
+            `;
+        }
+
+        // Computes Audio Telemetry, Pitch Detection & Phase Correlation
+        function computeTelemetry(minDb, maxDb) {
+            const binCount = analyser.frequencyBinCount;
+            const sampleRate = audioCtx.sampleRate;
+
+            // 1. Dominant Pitch Frequency & Centroid
+            let maxDbVal = -160;
+            let peakBin = 0;
+            let sumMag = 0;
+            let sumWeightedFreq = 0;
+
+            for (let i = 0; i < binCount; i++) {
+                const db = frequencyData[i];
+                if (db > maxDbVal) {
+                    maxDbVal = db;
+                    peakBin = i;
+                }
+
+                const mag = Math.pow(10, db / 20);
+                const freq = i * (sampleRate / analyser.fftSize);
+                sumMag += mag;
+                sumWeightedFreq += freq * mag;
+            }
+
+            const peakFreq = peakBin * (sampleRate / analyser.fftSize);
+            metricFreq.childNodes[0].nodeValue = peakFreq.toFixed(1) + ' ';
+
+            if (maxDbVal > minDb + 5) {
+                const noteInfo = freqToNote(peakFreq);
+                metricNote.childNodes[0].nodeValue = noteInfo.note + ' ';
+                metricCents.textContent = (noteInfo.cents >= 0 ? '+' : '') + noteInfo.cents + 'c';
+            } else {
+                metricNote.childNodes[0].nodeValue = '-- ';
+                metricCents.textContent = '+0c';
+            }
+
+            // 2. RMS Power & True Peak Level
+            let sumSquares = 0;
+            let maxAbsSample = 0;
+
+            for (let i = 0; i < timeDomainData.length; i++) {
+                const s = timeDomainData[i];
+                sumSquares += s * s;
+                if (Math.abs(s) > maxAbsSample) maxAbsSample = Math.abs(s);
+            }
+
+            const rms = Math.sqrt(sumSquares / timeDomainData.length);
+            const rmsDb = rms > 0.00001 ? 20 * Math.log10(rms) : -100;
+            const peakDb = maxAbsSample > 0.00001 ? 20 * Math.log10(maxAbsSample) : -100;
+
+            metricRMS.childNodes[0].nodeValue = rmsDb.toFixed(1) + ' ';
+            metricPeak.childNodes[0].nodeValue = peakDb.toFixed(1) + ' ';
+
+            // True Peak Clipping Detector (> -0.1 dBFS)
+            if (peakDb >= -0.1) {
+                clipAlert.classList.replace('bg-obsidian-800', 'bg-rose-600');
+                clipAlert.classList.replace('text-slate-500', 'text-white');
+                clipAlert.classList.add('glow-rose');
+            } else {
+                clipAlert.classList.replace('bg-rose-600', 'bg-obsidian-800');
+                clipAlert.classList.replace('text-white', 'text-slate-500');
+                clipAlert.classList.remove('glow-rose');
+            }
+
+            // 3. Crest Factor (Dynamic Range)
+            const crestFactor = Math.max(0, peakDb - rmsDb);
+            metricCrest.childNodes[0].nodeValue = crestFactor.toFixed(1) + ' ';
+
+            // 4. Spectral Centroid
+            const centroid = sumMag > 0 ? sumWeightedFreq / sumMag : 0;
+            metricCentroid.childNodes[0].nodeValue = Math.round(centroid) + ' ';
+
+            // 5. Stereo Phase Correlation Math
+            if (timeDomainDataL && timeDomainDataR) {
+                let dotProduct = 0;
+                let normL = 0;
+                let normR = 0;
+
+                for (let i = 0; i < timeDomainDataL.length; i++) {
+                    const l = timeDomainDataL[i];
+                    const r = timeDomainDataR[i];
+                    dotProduct += l * r;
+                    normL += l * l;
+                    normR += r * r;
+                }
+
+                const denominator = Math.sqrt(normL * normR);
+                const correlation = denominator > 0.00001 ? Math.max(-1, Math.min(1, dotProduct / denominator)) : 1.0;
+
+                metricCorrVal.textContent = (correlation >= 0 ? '+' : '') + correlation.toFixed(2);
+                const corrPct = Math.max(0, Math.min(100, ((correlation + 1) / 2) * 100));
+                metricCorrBar.style.width = corrPct + '%';
+            }
+
+            // 6. 6-Band Octave Breakdown Meters
+            BANDS.forEach(band => {
+                const binStart = Math.max(0, Math.floor(band.min / (sampleRate / analyser.fftSize)));
+                const binEnd = Math.min(binCount - 1, Math.ceil(band.max / (sampleRate / analyser.fftSize)));
+
+                let bandMaxDb = -160;
+                for (let b = binStart; b <= binEnd; b++) {
+                    if (frequencyData[b] > bandMaxDb) bandMaxDb = frequencyData[b];
+                }
+
+                const dbRange = maxDb - minDb;
+                const norm = Math.max(0, Math.min(1, (bandMaxDb - minDb) / dbRange));
+                const percent = (norm * 100).toFixed(1);
+
+                const barEl = document.getElementById(`bandBar_${band.id}`);
+                const valEl = document.getElementById(`bandVal_${band.id}`);
+                const pkEl = document.getElementById(`bandPk_${band.id}`);
+
+                if (barEl) barEl.style.width = percent + '%';
+                if (valEl) valEl.textContent = bandMaxDb > -120 ? bandMaxDb.toFixed(1) + ' dB' : '-INF';
+                if (pkEl) pkEl.textContent = `Pk: ${bandMaxDb.toFixed(0)}`;
+            });
+        }
+
+        // Convert Hz to Musical Note + Cents
+        function freqToNote(freq) {
+            if (freq <= 0) return { note: '--', cents: 0 };
+            const noteNum = 12 * Math.log2(freq / 440) + 69;
+            const roundedNote = Math.round(noteNum);
+            const cents = Math.round((noteNum - roundedNote) * 100);
+
+            const noteName = NOTE_NAMES[(roundedNote % 12 + 12) % 12];
+            const octave = Math.floor(roundedNote / 12) - 1;
+
+            return { note: `${noteName}${octave}`, cents };
+        }
+
+        // Kick off continuous render loop
+        requestAnimationFrame(renderLoop);
+
+    </script>
+</body>
+</html>
